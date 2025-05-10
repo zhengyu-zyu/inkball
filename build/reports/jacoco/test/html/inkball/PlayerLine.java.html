@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlayerLine.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inkball</a> &gt; <a href="index.source.html" class="el_package">inkball</a> &gt; <span class="el_source">PlayerLine.java</span></div><h1>PlayerLine.java</h1><pre class="source lang-java linenums">package inkball;
+
+import processing.core.PApplet;
+import processing.core.PVector;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlayerLine {
+    private List&lt;Line&gt; segments;
+    private static final float LINE_THICKNESS = 10;
+    private static final int LINE_COLOR = 0xFF000000;
+
+    private static final float MIN_X = 0;
+    private static final float MIN_Y = App.TOPBAR;
+<span class="fc" id="L15">    private static final float MAX_X = App.WIDTH;</span>
+<span class="fc" id="L16">    private static final float MAX_Y = App.HEIGHT;</span>
+
+<span class="fc" id="L18">    public PlayerLine() {</span>
+<span class="fc" id="L19">        segments = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L20">    }</span>
+
+    public void addPoint(float x, float y) {
+<span class="pc bpc" id="L23" title="3 of 8 branches missed.">        if (x &lt; MIN_X || x &gt; MAX_X || y &lt; MIN_Y || y &gt; MAX_Y) {</span>
+<span class="fc" id="L24">            return;</span>
+        }
+
+<span class="fc" id="L27">        PVector newPoint = new PVector(x, y);</span>
+
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (!segments.isEmpty()) {</span>
+<span class="fc" id="L30">            Line lastSegment = segments.get(segments.size() - 1);</span>
+<span class="fc" id="L31">            PVector lastPoint = lastSegment.getEnd();</span>
+
+            // Check if the new point is different from the last point
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">            if (!newPoint.equals(lastPoint)) {</span>
+<span class="fc" id="L35">                segments.add(new Line(lastPoint, newPoint));</span>
+            }
+<span class="fc" id="L37">        } else {</span>
+            // For the first point, create a segment with the same start and end point
+<span class="fc" id="L39">            segments.add(new Line(newPoint, newPoint));</span>
+        }
+<span class="fc" id="L41">    }</span>
+
+    public void draw(PApplet app) {
+<span class="fc" id="L44">        app.stroke(LINE_COLOR);</span>
+<span class="fc" id="L45">        app.strokeWeight(LINE_THICKNESS);</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        for (Line segment : segments) {</span>
+<span class="nc" id="L47">            segment.draw(app);</span>
+<span class="nc" id="L48">        }</span>
+<span class="fc" id="L49">    }</span>
+
+    public boolean intersects(float x, float y) {
+<span class="fc" id="L52">        PVector point = new PVector(x, y);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        for (Line segment : segments) {</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (segment.distanceToPoint(point) &lt; LINE_THICKNESS) {</span>
+<span class="fc" id="L55">                return true;</span>
+            }
+<span class="fc" id="L57">        }</span>
+<span class="fc" id="L58">        return false;</span>
+    }
+
+    public List&lt;Line&gt; getSegments() {
+<span class="fc" id="L62">        return new ArrayList&lt;&gt;(segments);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

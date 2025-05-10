@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Ball.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inkball</a> &gt; <a href="index.source.html" class="el_package">inkball</a> &gt; <span class="el_source">Ball.java</span></div><h1>Ball.java</h1><pre class="source lang-java linenums">package inkball;
+
+import processing.core.PImage;
+import processing.core.PVector;
+
+
+public class Ball extends Tile {
+    private char ballColor;
+    public PVector position;
+    public PVector velocity;
+    public float radius;
+    public boolean captured;
+    public Hole attractingHole;
+    public float originalRadius;
+
+
+    public Ball(int x, int y, char ballColor, Level level) {
+<span class="fc" id="L18">        super(x, y, level);</span>
+<span class="fc" id="L19">        this.ballColor = ballColor;</span>
+<span class="fc" id="L20">        this.position = new PVector(x * App.CELLSIZE + App.CELLSIZE / 2, y * App.CELLSIZE + App.CELLSIZE / 2 + App.TOPBAR);</span>
+<span class="fc" id="L21">        this.velocity = generateRandomVelocity();</span>
+<span class="fc" id="L22">        this.originalRadius = (App.CELLSIZE / 2.0f ) - 4;</span>
+<span class="fc" id="L23">        this.radius = originalRadius;</span>
+<span class="fc" id="L24">        this.captured = false;</span>
+<span class="fc" id="L25">        this.attractingHole = null;</span>
+<span class="fc" id="L26">    }</span>
+
+    PVector generateRandomVelocity() {
+<span class="fc" id="L29">        float speed = 1.0f;</span>
+<span class="fc" id="L30">        return new PVector(</span>
+<span class="fc bfc" id="L31" title="All 2 branches covered.">                Math.random() &lt; 0.5 ? -speed : speed,</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">                Math.random() &lt; 0.5 ? -speed : speed</span>
+        );
+    }
+
+    public void update() {
+
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">        if (captured) {</span>
+<span class="nc" id="L39">            return;</span>
+        }
+
+<span class="fc" id="L42">        checkAcceleration(position);</span>
+<span class="fc" id="L43">        checkHoleAttraction();</span>
+
+<span class="fc" id="L45">        PVector nextPosition = PVector.add(position, velocity);</span>
+<span class="fc" id="L46">        checkCollisions(nextPosition);</span>
+<span class="fc" id="L47">        position.set(nextPosition);</span>
+
+        // Update x and y based on the new position
+<span class="fc" id="L50">        this.x = (int) (position.x / App.CELLSIZE);</span>
+<span class="fc" id="L51">        this.y = (int) ((position.y - App.TOPBAR) / App.CELLSIZE);</span>
+
+<span class="fc" id="L53">        updateRadius();</span>
+
+<span class="fc" id="L55">    }</span>
+
+    private void checkAcceleration(PVector position){
+<span class="fc" id="L58">        int cellX = (int) (position.x / App.CELLSIZE);</span>
+<span class="fc" id="L59">        int cellY = (int) ((position.y - App.TOPBAR) / App.CELLSIZE);</span>
+
+<span class="fc" id="L61">        char[][] grid = level.grid;</span>
+<span class="pc bpc" id="L62" title="3 of 10 branches missed.">        if (grid != null &amp;&amp; cellY &gt;= 0 &amp;&amp; cellY &lt; grid.length &amp;&amp;</span>
+                cellX &gt;= 0 &amp;&amp; cellX &lt; grid[cellY].length) {
+<span class="fc" id="L64">            char cell = grid[cellY][cellX];</span>
+<span class="pc bpc" id="L65" title="4 of 8 branches missed.">            if (cell == 'U' || cell == 'D' || cell == 'L' || cell == 'R'){</span>
+<span class="nc" id="L66">                PVector velocityChange = changeDirectionToVelocity(cell);</span>
+<span class="nc" id="L67">                this.velocity.add(velocityChange);</span>
+            }
+        }
+<span class="fc" id="L70">    }</span>
+
+    public PVector changeDirectionToVelocity(char direction) {
+<span class="fc bfc" id="L73" title="All 5 branches covered.">        switch (direction) {</span>
+<span class="fc" id="L74">            case 'U': return new PVector(0, -0.25f);</span>
+<span class="fc" id="L75">            case 'D': return new PVector(0, 0.25f);</span>
+<span class="fc" id="L76">            case 'L': return new PVector(-0.25f, 0);</span>
+<span class="fc" id="L77">            case 'R': return new PVector(0.25f, 0);</span>
+<span class="fc" id="L78">            default: throw new IllegalArgumentException(&quot;Unknown direction: &quot; + direction);</span>
+        }
+    }
+
+
+    public void checkHoleAttraction() {
+<span class="fc" id="L84">        Hole nearestHole = null;</span>
+<span class="fc" id="L85">        float nearestDistance = 100.0f;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for (Tile tile : level.getTiles()) {</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            if (tile instanceof Hole) {</span>
+<span class="fc" id="L88">                Hole hole = (Hole) tile;</span>
+<span class="fc" id="L89">                float distance = PVector.dist(position, new PVector(hole.getCenterX(), hole.getCenterY()));</span>
+<span class="pc bpc" id="L90" title="3 of 4 branches missed.">                if (distance &lt;= 32 &amp;&amp; distance &lt; nearestDistance) {</span>
+<span class="nc" id="L91">                    nearestHole = hole;</span>
+<span class="nc" id="L92">                    nearestDistance = distance;</span>
+                }
+            }
+<span class="fc" id="L95">        }</span>
+<span class="fc" id="L96">        attractingHole = nearestHole;</span>
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (attractingHole != null) {</span>
+<span class="nc" id="L99">            PVector holeCenter = new PVector(</span>
+                    attractingHole.x * App.CELLSIZE + App.CELLSIZE,
+                    attractingHole.y * App.CELLSIZE + App.CELLSIZE + App.TOPBAR
+            );
+<span class="nc" id="L103">            PVector attractionVector = PVector.sub(holeCenter, position);</span>
+<span class="nc" id="L104">            float distance = attractionVector.mag();</span>
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (distance &lt; 10) {</span>
+<span class="nc" id="L107">                captured = true;</span>
+<span class="nc" id="L108">                handleCapture();</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">            } else if (distance &lt; 32 ) {</span>
+<span class="nc" id="L110">                attractionVector.normalize().mult(0.005f * distance);</span>
+<span class="nc" id="L111">                velocity.add(attractionVector);</span>
+            }
+        }
+<span class="fc" id="L114">    }</span>
+
+    public void updateRadius() {
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (attractingHole != null) {</span>
+<span class="fc" id="L118">            PVector holeCenter = new PVector(</span>
+                    attractingHole.x * App.CELLSIZE + App.CELLSIZE,
+                    attractingHole.y * App.CELLSIZE + App.CELLSIZE + App.TOPBAR
+            );
+<span class="fc" id="L122">            float distance = PVector.dist(position, holeCenter);</span>
+<span class="fc" id="L123">            float shrinkFactor = Math.max(0, Math.min(1, distance / 32));</span>
+<span class="fc" id="L124">            radius = originalRadius * shrinkFactor;</span>
+<span class="fc" id="L125">        } else {</span>
+<span class="fc" id="L126">            radius = originalRadius;</span>
+        }
+<span class="fc" id="L128">    }</span>
+
+    public void handleCapture() {
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (!captured){</span>
+<span class="nc" id="L132">            return;</span>
+        }
+<span class="pc bpc" id="L134" title="3 of 4 branches missed.">        boolean success = (attractingHole.getColor() == ballColor) ||</span>
+                (ballColor == '0') ||
+<span class="pc bnc" id="L136" title="All 2 branches missed.">                (attractingHole.getColor() == '0');</span>
+
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (success) {</span>
+            // Increase score
+<span class="fc" id="L140">            level.increaseScore(changeBallColorToString(this));</span>
+        } else {
+            // Decrease score and respawn ball
+<span class="nc" id="L143">            level.decreaseScore(changeBallColorToString(this));</span>
+<span class="nc" id="L144">            level.respawnBall(this);</span>
+        }
+<span class="fc" id="L146">    }</span>
+
+    private void checkCollisions(PVector nextPosition) {
+        // Check edge collisions
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (nextPosition.x - radius &lt; 0) {</span>
+<span class="fc" id="L151">            nextPosition.x = radius;</span>
+<span class="fc" id="L152">            velocity.x = Math.abs(velocity.x);</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        } else if (nextPosition.x + radius &gt; App.WIDTH + 8) {</span>
+<span class="fc" id="L154">            nextPosition.x = App.WIDTH - radius;</span>
+<span class="fc" id="L155">            velocity.x = -Math.abs(velocity.x);</span>
+        }
+
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (nextPosition.y - radius &lt; App.TOPBAR) {</span>
+<span class="fc" id="L159">            nextPosition.y = App.TOPBAR + radius;</span>
+<span class="fc" id="L160">            velocity.y = Math.abs(velocity.y);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        } else if (nextPosition.y + radius &gt; App.HEIGHT + 8) {</span>
+<span class="fc" id="L162">            nextPosition.y = App.HEIGHT - radius;</span>
+<span class="fc" id="L163">            velocity.y = -Math.abs(velocity.y);</span>
+        }
+
+        // Check wall collisions
+<span class="fc" id="L167">        int gridX = (int) (nextPosition.x / App.CELLSIZE);</span>
+<span class="fc" id="L168">        int gridY = (int) ((nextPosition.y - App.TOPBAR) / App.CELLSIZE);</span>
+
+<span class="fc" id="L170">        int[][] standardDirections = {</span>
+                {0, -1},
+                {0, 1},
+                {-1, 0},
+                {1, 0}
+        };
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        for (int[] dir : standardDirections) {</span>
+<span class="fc" id="L177">            int dx = dir[0];</span>
+<span class="fc" id="L178">            int dy = dir[1];</span>
+<span class="fc" id="L179">            boolean flag = true;</span>
+<span class="fc" id="L180">            checkWallInCell(gridX + dx, gridY + dy, nextPosition, flag);</span>
+        }
+<span class="fc" id="L182">        int[][] diagonalDirections = {</span>
+                {-1, -1},
+                {-1, 1},
+                {1, -1},
+                {1, 1}
+        };
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        for (int[] dir : diagonalDirections) {</span>
+<span class="fc" id="L189">            int dx = dir[0];</span>
+<span class="fc" id="L190">            int dy = dir[1];</span>
+<span class="fc" id="L191">            boolean flag = false;</span>
+<span class="fc" id="L192">            checkWallInCell(gridX + dx, gridY + dy, nextPosition, flag);</span>
+        }
+<span class="fc" id="L194">    }</span>
+
+    private void checkWallInCell(int cellX, int cellY, PVector nextPosition, boolean flag) {
+<span class="pc bpc" id="L197" title="1 of 8 branches missed.">        if (cellX &lt; 0 || cellX &gt;= App.BOARD_WIDTH || cellY &lt; 0 || cellY &gt;= App.BOARD_HEIGHT) {</span>
+<span class="fc" id="L198">            return;</span>
+        }
+
+<span class="fc" id="L201">        char[][] grid = level.grid;</span>
+<span class="pc bpc" id="L202" title="4 of 10 branches missed.">        if (grid != null &amp;&amp; cellY &gt;= 0 &amp;&amp; cellY &lt; grid.length &amp;&amp;</span>
+                cellX &gt;= 0 &amp;&amp; cellX &lt; grid[cellY].length) {
+<span class="fc" id="L204">            char cell = grid[cellY][cellX];</span>
+
+<span class="fc bfc" id="L206" title="All 6 branches covered.">            if (cell &gt;= '1' &amp;&amp; cell &lt;= '4' || cell == 'X') {</span>
+<span class="fc" id="L207">                float wallLeft = cellX * App.CELLSIZE - 2;</span>
+<span class="fc" id="L208">                float wallRight = (cellX + 1) * App.CELLSIZE + 2;</span>
+<span class="fc" id="L209">                float wallTop = cellY * App.CELLSIZE + App.TOPBAR - 2;</span>
+<span class="fc" id="L210">                float wallBottom = (cellY + 1) * App.CELLSIZE + App.TOPBAR + 2;</span>
+
+                // Check for collision
+<span class="fc bfc" id="L213" title="All 8 branches covered.">                if (nextPosition.x + radius &gt;= wallLeft &amp;&amp; wallRight &gt;= nextPosition.x - radius &amp;&amp;</span>
+                        nextPosition.y + radius &gt;= wallTop &amp;&amp; wallBottom &gt;= nextPosition.y - radius) {
+
+                    // Determine which side of the wall was hit
+<span class="fc" id="L217">                    float overlapLeft = nextPosition.x + radius - wallLeft;</span>
+<span class="fc" id="L218">                    float overlapRight = wallRight - (nextPosition.x - radius);</span>
+<span class="fc" id="L219">                    float overlapTop = nextPosition.y + radius - wallTop;</span>
+<span class="fc" id="L220">                    float overlapBottom = wallBottom - (nextPosition.y - radius);</span>
+
+<span class="fc" id="L222">                    final float overlapTolerance = 0.001f;// set the tolerance</span>
+
+                    // Whether ball hits wall's corner
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">                    if (Math.abs(overlapLeft - overlapRight) &lt; overlapTolerance &amp;&amp;</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">                            Math.abs(overlapTop - overlapBottom) &lt; overlapTolerance) {</span>
+                        // Ball hit the corner
+<span class="nc" id="L228">                        velocity.x *= -1;</span>
+<span class="nc" id="L229">                        velocity.y *= -1;</span>
+<span class="nc" id="L230">                        nextPosition.x = position.x;</span>
+<span class="nc" id="L231">                        nextPosition.y = position.y;</span>
+                    } else {
+
+                        // Find the smallest overlap
+<span class="fc" id="L235">                        float minOverlap = Math.min(Math.min(overlapLeft, overlapRight), Math.min(overlapTop, overlapBottom));</span>
+
+                        // Adjust position and velocity based on the collision side
+<span class="fc bfc" id="L238" title="All 4 branches covered.">                        if (minOverlap == overlapLeft || minOverlap == overlapRight) {</span>
+<span class="fc" id="L239">                            velocity.x *= -1;</span>
+<span class="fc" id="L240">                            nextPosition.x = position.x;</span>
+                        } else {
+<span class="fc" id="L242">                            velocity.y *= -1;</span>
+<span class="fc" id="L243">                            nextPosition.y = position.y;</span>
+                        }
+
+                        // Change ball color if necessary
+<span class="pc bpc" id="L247" title="5 of 6 branches missed.">                        if (cell != 'X' &amp;&amp; ballColor != cell &amp;&amp; flag) {</span>
+<span class="nc" id="L248">                            this.ballColor = cell;</span>
+                        }
+                    }
+                }
+            }
+        }
+<span class="fc" id="L254">    }</span>
+
+    public void setPosition(PVector newPosition) {
+<span class="fc" id="L257">        this.position = newPosition.copy();</span>
+<span class="fc" id="L258">    }</span>
+
+    public void setVelocity(PVector newVelocity) {
+<span class="fc" id="L261">        this.velocity = newVelocity.copy();</span>
+<span class="fc" id="L262">    }</span>
+
+    @Override
+    public void draw(App app) {
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">        if (captured) return;</span>
+
+<span class="fc" id="L268">        PImage image = app.getSprite(&quot;ball&quot; + ballColor);</span>
+
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        if (image != null){</span>
+<span class="fc" id="L271">            float drawRadius = radius * 2;</span>
+<span class="fc" id="L272">            app.image(image, position.x - radius, position.y - radius, drawRadius, drawRadius);</span>
+        }
+<span class="fc" id="L274">    }</span>
+
+    public String changeBallColorToString(Ball ball) {
+<span class="fc bfc" id="L277" title="All 6 branches covered.">        switch (ball.ballColor) {</span>
+<span class="fc" id="L278">            case '0': return &quot;grey&quot;;</span>
+<span class="fc" id="L279">            case '1': return &quot;orange&quot;;</span>
+<span class="fc" id="L280">            case '2': return &quot;blue&quot;;</span>
+<span class="fc" id="L281">            case '3': return &quot;green&quot;;</span>
+<span class="fc" id="L282">            case '4': return &quot;yellow&quot;;</span>
+<span class="fc" id="L283">            default: throw new IllegalArgumentException(&quot;Unknown color number&quot;);</span>
+        }
+    }
+
+    public PVector getPosition() {
+<span class="fc" id="L288">        return position.copy();</span>
+    }
+    public PVector getVelocity() {
+<span class="fc" id="L291">        return velocity.copy();</span>
+    }
+    public boolean getCaptured() {
+<span class="fc" id="L294">        return this.captured;</span>
+    }
+
+    public int getX() {
+<span class="fc" id="L298">        return this.x;</span>
+    }
+    public int getY() {
+<span class="fc" id="L301">        return this.y;</span>
+    }
+
+    public char getColorCode() {
+<span class="fc" id="L305">        return this.ballColor;</span>
+    }
+
+    public float getRadius() {
+<span class="fc" id="L309">        return this.radius;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

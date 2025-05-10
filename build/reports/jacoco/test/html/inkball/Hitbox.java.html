@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Hitbox.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inkball</a> &gt; <a href="index.source.html" class="el_package">inkball</a> &gt; <span class="el_source">Hitbox.java</span></div><h1>Hitbox.java</h1><pre class="source lang-java linenums">package inkball;
+
+import processing.core.PVector;
+import java.util.List;
+
+<span class="nc" id="L6">public class Hitbox {</span>
+<span class="fc" id="L7">    private static float BALL_RADIUS = App.CELLSIZE / 2.0f;</span>
+
+    public static boolean checkCollision(PVector ballPosition, PVector ballVelocity, Line segment) {
+<span class="fc" id="L10">        PVector p1 = segment.getStart();</span>
+<span class="fc" id="L11">        PVector p2 = segment.getEnd();</span>
+
+<span class="fc" id="L13">        float distanceP1 = PVector.dist(p1, PVector.add(ballPosition, ballVelocity));</span>
+<span class="fc" id="L14">        float distanceP2 = PVector.dist(p2, PVector.add(ballPosition, ballVelocity));</span>
+<span class="fc" id="L15">        float segmentLength = segment.length();</span>
+
+<span class="pc bpc" id="L17" title="1 of 2 branches missed.">        return (distanceP1 + distanceP2) &lt; (segmentLength + BALL_RADIUS);</span>
+    }
+
+    public static PVector calculateNewTrajectory(PVector ballPosition,PVector ballVelocity, Line segment) {
+<span class="fc" id="L21">        PVector normal = segment.getNormal(ballPosition);</span>
+<span class="fc" id="L22">        float dotProduct = ballVelocity.dot(normal);</span>
+<span class="fc" id="L23">        return PVector.sub(ballVelocity, PVector.mult(normal, 2 * dotProduct));</span>
+    }
+
+    public static Line findCollidingSegment(PVector ballPosition, PVector ballVelocity, List&lt;Line&gt; segments) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        for (Line segment : segments) {</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">            if (checkCollision(ballPosition, ballVelocity, segment)) {</span>
+<span class="nc" id="L29">                return segment;</span>
+            }
+<span class="nc" id="L31">        }</span>
+<span class="fc" id="L32">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

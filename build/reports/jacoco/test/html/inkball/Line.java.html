@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Line.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inkball</a> &gt; <a href="index.source.html" class="el_package">inkball</a> &gt; <span class="el_source">Line.java</span></div><h1>Line.java</h1><pre class="source lang-java linenums">package inkball;
+
+import processing.core.PVector;
+import processing.core.PApplet;
+
+public class Line {
+    private PVector start;
+    private PVector end;
+    private PVector normal;
+
+<span class="fc" id="L11">    public Line(PVector start, PVector end) {</span>
+<span class="fc" id="L12">        this.start = start;</span>
+<span class="fc" id="L13">        this.end = end;</span>
+<span class="fc" id="L14">        calculateNormal(null);</span>
+<span class="fc" id="L15">    }</span>
+
+    private void calculateNormal(PVector ballPosition) {
+<span class="fc" id="L18">        PVector direction = PVector.sub(end, start);</span>
+<span class="fc bfc" id="L19" title="All 2 branches covered.">        if (direction.mag() == 0) {</span>
+            // For zero-length lines (dots), set an arbitrary normal
+//            normal = PVector.sub(ballPosition, start).normalize();
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">            if (ballPosition != null) {</span>
+<span class="nc" id="L23">                normal = PVector.sub(ballPosition, start).normalize();</span>
+            } else {
+                // If no ball position is provided, set a default normal
+<span class="fc" id="L26">                normal = new PVector(0, 1);</span>
+            }
+        } else {
+<span class="fc" id="L29">            normal = new PVector(-direction.y, direction.x).normalize();</span>
+        }
+<span class="fc" id="L31">    }</span>
+
+    public float distanceToPoint(PVector point) {
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (start.equals(end)) {</span>
+<span class="fc" id="L35">            return PVector.dist(start, point);</span>
+        }
+<span class="fc" id="L37">        PVector AP = PVector.sub(point, start);</span>
+<span class="fc" id="L38">        PVector AB = PVector.sub(end, start);</span>
+<span class="fc" id="L39">        float projection = AP.dot(AB) / AB.magSq();</span>
+<span class="fc" id="L40">        projection = PApplet.constrain(projection, 0, 1);</span>
+<span class="fc" id="L41">        PVector closest = PVector.add(start, PVector.mult(AB, projection));</span>
+<span class="fc" id="L42">        return PVector.dist(point, closest);</span>
+    }
+
+    public void draw(PApplet app) {
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (start.equals(end)) {</span>
+            // Draw a point for zero-length lines (dots)
+<span class="nc" id="L48">            app.point(start.x, start.y);</span>
+        } else {
+<span class="nc" id="L50">            app.line(start.x, start.y, end.x, end.y);</span>
+        }
+<span class="nc" id="L52">    }</span>
+
+    public PVector getStart() {
+<span class="fc" id="L55">        return start.copy();</span>
+    }
+    public PVector getEnd() {
+<span class="fc" id="L58">        return end.copy();</span>
+    }
+    public PVector getNormal(PVector ballPosition) {
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (start.equals(end)) {</span>
+            // Recalculate normal for dots based on current ball position
+<span class="fc" id="L63">            calculateNormal(ballPosition);</span>
+        }
+<span class="fc" id="L65">        return normal.copy();</span>
+    }
+    public PVector getMidpoint() {
+<span class="fc" id="L68">        return PVector.add(start, end).div(2);</span>
+    }
+    public float length() {
+<span class="fc" id="L71">        return PVector.dist(start, end);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

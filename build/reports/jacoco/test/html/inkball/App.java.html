@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">inkball</a> &gt; <a href="index.source.html" class="el_package">inkball</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package inkball;
+
+import processing.core.PApplet;
+import processing.core.PImage;
+import processing.data.JSONObject;
+import processing.event.KeyEvent;
+import processing.event.MouseEvent;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
+import java.util.*;
+
+public class App extends PApplet {
+
+    public static final int CELLSIZE = 32; //8;
+    public static final int CELLHEIGHT = 32;
+
+    public static final int CELLAVG = 32;
+    public static final int TOPBAR = 64;
+<span class="fc" id="L22">    public static int WIDTH = 576; //CELLSIZE*BOARD_WIDTH;</span>
+<span class="fc" id="L23">    public static int HEIGHT = 640; //BOARD_HEIGHT*CELLSIZE+TOPBAR;</span>
+<span class="fc" id="L24">    public static final int BOARD_WIDTH = WIDTH/CELLSIZE;</span>
+    public static final int BOARD_HEIGHT = 20;
+
+    public static final int INITIAL_PARACHUTES = 1;
+
+    public static final int FPS = 60;
+
+    public String configPath;
+
+<span class="fc" id="L33">    public static Random random = new Random();</span>
+    public int currentLevelScore;
+
+    private Config config;
+    private Level currentLevel;
+<span class="fc" id="L38">    int levelIndex = 0;</span>
+
+<span class="fc" id="L40">    public GameState gameState = GameState.PLAYING;</span>
+    public PlayerLine currentLine;
+<span class="fc" id="L42">    public List&lt;PlayerLine&gt; playerLines = new ArrayList&lt;&gt;();</span>
+
+
+
+
+<span class="fc" id="L47">    public enum GameState {</span>
+<span class="fc" id="L48">        PLAYING,</span>
+<span class="fc" id="L49">        PAUSED,</span>
+<span class="fc" id="L50">        GAME_OVER</span>
+    }
+    // Feel free to add any additional methods or attributes you want. Please put classes in different files.
+
+<span class="fc" id="L54">    public App() {</span>
+<span class="fc" id="L55">        this.configPath = &quot;config.json&quot;;</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Initialise the setting of the window size.
+     */
+	@Override
+    public void settings() {
+<span class="nc" id="L63">        size(WIDTH, HEIGHT);</span>
+<span class="nc" id="L64">    }</span>
+
+    /**
+     * Load all resources such as images. Initialise the elements such as the player and map elements.
+     */
+    @Override
+    public void setup() {
+<span class="nc" id="L71">        frameRate(FPS);</span>
+
+<span class="nc" id="L73">        JSONObject loadedConfig = loadJSONObject(configPath);</span>
+
+        try {
+<span class="nc" id="L76">            this.config = new Config(loadedConfig);</span>
+<span class="nc" id="L77">            JSONObject levelConfig = config.getLevelConfig(levelIndex);</span>
+<span class="nc" id="L78">            currentLevel = new Level(levelConfig, config, levelIndex);</span>
+<span class="nc" id="L79">            currentLevel.loadFile();</span>
+<span class="nc" id="L80">        } catch (Exception e) {</span>
+<span class="nc" id="L81">            throw new RuntimeException(e);</span>
+<span class="nc" id="L82">        }</span>
+
+<span class="nc" id="L84">        String[] spriteNames = {</span>
+                &quot;ball0&quot;, &quot;ball1&quot;, &quot;ball2&quot;, &quot;ball3&quot;, &quot;ball4&quot;,
+                &quot;entrypoint&quot;, &quot;hole0&quot;, &quot;hole1&quot;, &quot;hole2&quot;, &quot;hole3&quot;, &quot;hole4&quot;,
+                &quot;tile&quot;, &quot;wall0&quot;, &quot;wall1&quot;, &quot;wall2&quot;, &quot;wall3&quot;, &quot;wall4&quot;,
+                &quot;up&quot;,&quot;down&quot;,&quot;right&quot;,&quot;left&quot;
+        };
+
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        for (String spriteName : spriteNames) {</span>
+<span class="nc" id="L92">            getSprite(spriteName);</span>
+        }
+<span class="nc" id="L94">    }</span>
+
+<span class="fc" id="L96">    private static HashMap&lt;String, PImage&gt; sprites = new HashMap&lt;&gt;();</span>
+    public PImage getSprite(String s) {
+<span class="fc" id="L98">        PImage result = sprites.get(s);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (result == null) {</span>
+            try {
+<span class="nc" id="L101">                result = loadImage(URLDecoder.decode(this.getClass().getResource(s + &quot;.png&quot;).getPath(), StandardCharsets.UTF_8.name()));</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">                if (result == null) {</span>
+<span class="nc" id="L103">                    println(&quot;Image not found: &quot; + s);</span>
+                } else {
+<span class="nc" id="L105">                    sprites.put(s, result);</span>
+                }
+<span class="nc" id="L107">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L108">                throw new RuntimeException(e);</span>
+<span class="nc" id="L109">            }</span>
+        }
+<span class="fc" id="L111">        return result;</span>
+    }
+
+    public void setSprite(String key, PImage image) {
+<span class="fc bfc" id="L115" title="All 4 branches covered.">        if (key == null || key.isEmpty()) {</span>
+<span class="fc" id="L116">            throw new IllegalArgumentException(&quot;Sprite key cannot be null or empty&quot;);</span>
+        }
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (image == null) {</span>
+<span class="fc" id="L119">            throw new IllegalArgumentException(&quot;Sprite image cannot be null&quot;);</span>
+        }
+
+<span class="fc" id="L122">        sprites.put(key, image);</span>
+<span class="fc" id="L123">    }</span>
+
+
+    /**
+     * Receive key pressed signal from the keyboard.
+     */
+	@Override
+    public void keyPressed(KeyEvent event){
+<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (event.getKey() == 'r' || event.getKey() == 'R') {</span>
+<span class="nc" id="L132">            restartLevel();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        } else if (event.getKey() == ' ') {</span>
+<span class="nc" id="L134">            togglePause();</span>
+        }
+<span class="nc" id="L136">    }</span>
+
+    private void restartLevel() {
+        try {
+<span class="nc bnc" id="L140" title="All 2 branches missed.">            if(gameState == GameState.GAME_OVER) {</span>
+<span class="nc" id="L141">                levelIndex = 0;</span>
+<span class="nc" id="L142">                levelScores[0] = 0;</span>
+<span class="nc" id="L143">                levelScores[1] = 0;</span>
+<span class="nc" id="L144">                levelScores[2] = 0;</span>
+            }
+<span class="nc" id="L146">            JSONObject levelConfig = config.getLevelConfig(levelIndex);</span>
+<span class="nc" id="L147">            currentLevel = new Level(levelConfig, config, levelIndex);</span>
+<span class="nc" id="L148">            currentLevel.loadFile();</span>
+<span class="nc" id="L149">        } catch (Exception e) {</span>
+<span class="nc" id="L150">            throw new RuntimeException(e);</span>
+<span class="nc" id="L151">        }</span>
+<span class="nc" id="L152">        levelScores[levelIndex] = 0;</span>
+<span class="nc" id="L153">        playerLines.clear();</span>
+<span class="nc" id="L154">        gameState = GameState.PLAYING;</span>
+<span class="nc" id="L155">    }</span>
+
+    public void togglePause() {
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (gameState == GameState.PLAYING) {</span>
+<span class="fc" id="L159">            gameState = GameState.PAUSED;</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        } else if (gameState == GameState.PAUSED) {</span>
+<span class="fc" id="L161">            gameState = GameState.PLAYING;</span>
+        }
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * Receive key released signal from the keyboard.
+     */
+	@Override
+    public void keyReleased(){
+        
+<span class="nc" id="L171">    }</span>
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        // create a new player-drawn line object
+<span class="nc bnc" id="L176" title="All 2 branches missed.">            if (e.getButton() == LEFT) {</span>
+<span class="nc" id="L177">                currentLine = new PlayerLine();</span>
+<span class="nc" id="L178">                currentLine.addPoint(e.getX(), e.getY());</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">            }else if (e.getButton() == RIGHT) {</span>
+<span class="nc" id="L180">                removeLine(e.getX(), e.getY());</span>
+            }
+<span class="nc" id="L182">    }</span>
+	
+	@Override
+    public void mouseDragged(MouseEvent e) {
+        // add line segments to player-drawn line object if left mouse button is held
+		
+		// remove player-drawn line object if right mouse button is held 
+		// and mouse position collides with the line
+<span class="nc bnc" id="L190" title="All 4 branches missed.">            if(e.getButton() == LEFT &amp;&amp; currentLine != null) {</span>
+<span class="nc" id="L191">                currentLine.addPoint(e.getX(), e.getY());</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            }else if (e.getButton() == RIGHT) {</span>
+<span class="nc" id="L193">                removeLine(e.getX(), e.getY());</span>
+            }
+<span class="nc" id="L195">    }</span>
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+<span class="nc bnc" id="L199" title="All 4 branches missed.">        if (e.getButton() == LEFT &amp;&amp; !(gameState == GameState.GAME_OVER)) {</span>
+<span class="nc bnc" id="L200" title="All 4 branches missed.">            if (e.getButton() == LEFT &amp;&amp;currentLine != null) {</span>
+<span class="nc" id="L201">                playerLines.add(currentLine);</span>
+<span class="nc" id="L202">                currentLine = null;</span>
+            }
+        }
+<span class="nc" id="L205">    }</span>
+
+
+    public void removeLine(float x, float y) {
+<span class="nc" id="L209">        playerLines.removeIf(line -&gt; line.intersects(x, y));</span>
+<span class="nc" id="L210">    }</span>
+
+
+    /**
+     * Draw all elements in the game by current frame.
+     */
+	@Override
+    public void draw() {
+<span class="nc" id="L218">        background(200, 200, 200);</span>
+
+        //----------------------------------
+        //display Board for current level:
+        //----------------------------------
+        //TODO
+
+<span class="nc" id="L225">        currentLevel.draw(this);</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (gameState == GameState.PLAYING) {</span>
+<span class="nc" id="L228">            currentLevel.update(playerLines);</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (currentLevel.isAnimationComplete) {</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                if (levelIndex &lt; 3) {</span>
+<span class="nc" id="L232">                    completeLevel();</span>
+                } else {
+<span class="nc" id="L234">                    gameState = GameState.GAME_OVER;</span>
+                }
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            } else if (currentLevel.timer == 0) {</span>
+<span class="nc" id="L237">                gameState = GameState.GAME_OVER;</span>
+            }
+
+        }
+
+        //----------------------------------
+        //display score
+        //----------------------------------
+        //TODO
+<span class="nc" id="L246">        displayScore();</span>
+        
+		//----------------------------------
+        //----------------------------------
+		//display game end message
+<span class="nc bnc" id="L251" title="All 2 branches missed.">        if (gameState == GameState.PAUSED) {</span>
+<span class="nc" id="L252">            displayPauseMessage();</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">        } else if (gameState == GameState.GAME_OVER) {</span>
+<span class="nc" id="L254">            displayGameOverMessage();</span>
+        }
+
+
+
+<span class="nc" id="L259">    }</span>
+
+<span class="fc" id="L261">    public static int[] levelScores = new int[3];</span>
+
+    public void displayScore() {
+<span class="nc" id="L264">        fill(0);</span>
+<span class="nc" id="L265">        textSize(20);</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">        if (currentLevel.score != 0) {</span>
+<span class="nc" id="L267">            levelScores[levelIndex] = currentLevel.score;</span>
+        }
+<span class="nc" id="L269">        int displayScore = Math.max(0, levelScores[0] + levelScores[1] + levelScores[2]);</span>
+<span class="nc" id="L270">        text(&quot;Score:   &quot; + displayScore, width - 130, CELLHEIGHT - 7);</span>
+<span class="nc" id="L271">    }</span>
+
+
+
+    void completeLevel() {
+<span class="nc" id="L276">        levelIndex++;</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        if (levelIndex &lt; 3) {</span>
+            try {
+<span class="nc" id="L279">                JSONObject levelConfig = config.getLevelConfig(levelIndex);</span>
+<span class="nc" id="L280">                currentLevel = new Level(levelConfig, config, levelIndex);</span>
+<span class="nc" id="L281">                currentLevel.loadFile();</span>
+<span class="nc" id="L282">            } catch (Exception e) {</span>
+<span class="nc" id="L283">                throw new RuntimeException(e);</span>
+<span class="nc" id="L284">            }</span>
+        } else {
+<span class="nc" id="L286">            gameState = GameState.GAME_OVER;</span>
+        }
+<span class="nc" id="L288">        playerLines.clear();</span>
+<span class="nc" id="L289">    }</span>
+
+    private void displayPauseMessage() {
+<span class="nc" id="L292">        fill(0);</span>
+<span class="nc" id="L293">        textSize(24);</span>
+<span class="nc" id="L294">        text(&quot;*** PAUSED ***&quot;, WIDTH / 2 - CELLAVG * 2, TOPBAR / 2 + CELLHEIGHT / 2 - 6 );</span>
+<span class="nc" id="L295">    }</span>
+
+    private void displayGameOverMessage() {
+<span class="nc" id="L298">        fill(0);</span>
+<span class="nc" id="L299">        textSize(24);</span>
+<span class="nc" id="L300">        text(&quot;=== ENDED ===&quot;, WIDTH / 2 - CELLAVG * 2, TOPBAR / 2 + CELLHEIGHT / 2 - 6 );</span>
+<span class="nc" id="L301">    }</span>
+
+
+    public static void main(String[] args) {
+<span class="nc" id="L305">        PApplet.main(&quot;inkball.App&quot;);</span>
+<span class="nc" id="L306">    }</span>
+
+    public String getConfigPath() {
+<span class="fc" id="L309">        return configPath;</span>
+    }
+    public int getWidth(){
+<span class="fc" id="L312">        return width;</span>
+    }
+    public int getHeight(){
+<span class="fc" id="L315">        return height;</span>
+    }
+    public Object getConfig() {
+<span class="nc" id="L318">        return config;</span>
+    }
+    public Object getCurrentLevel() {
+<span class="nc" id="L321">        return currentLevel;</span>
+    }
+    public int getLevelIndex() {
+<span class="nc" id="L324">        return levelIndex;</span>
+    }
+    public int calculateTotalScore() {
+<span class="fc" id="L327">        return Math.max(0, levelScores[0] + levelScores[1] + levelScores[2]);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
